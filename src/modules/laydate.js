@@ -1,4 +1,4 @@
-/** laydate 日期与时间控件 | MIT Licensed */ 
+/** laydate 日期与时间控件 | MIT Licensed */
 // @ts-expect-error
 ;!function(window, document){ // gulp build: laydate-header
   "use strict";
@@ -187,6 +187,7 @@
     ,change: null //日期时间改变后的回调
     ,autoConfirm: true //是否自动确认（日期|年份|月份选择器非range下是否自动确认）
     ,shade: 0
+    ,minutesStep: 1 //默认分钟间隔
   };
 
   //多语言
@@ -917,6 +918,17 @@
       value = value.replace(/\s+/g, ' ').replace(/^\s|\s$/g, '');
     }
 
+    // 时间范围选择器，右面板的分钟值默认选中最后一个
+    var defaultEndMinutes = function () {
+      var temp = []
+      lay.each(new Array(60), function (ii) {
+        if (ii % options.minutesStep === 0) {
+          temp.push(ii)
+        }
+      })
+      return temp[temp.length - 1]
+    }
+
     //如果开启范围，则计算结束日期
     var getEndDate = function(){
       if(options.range){
@@ -936,7 +948,8 @@
           //初始右侧面板的时间
           if(options.type === 'datetime' || options.type === 'time'){
             obj.hours = 23;
-            obj.minutes = obj.seconds = 59;
+            obj.minutes = defaultEndMinutes()
+            obj.seconds = 59;
           }
 
           return obj;
@@ -1084,7 +1097,7 @@
       lay.each(ymd2, function(i,v){
         ymd2[i] = parseInt(v, 10);
       })
-      
+
       return ymd1.join('-') === ymd2.join('-');
     }
 
@@ -1103,7 +1116,7 @@
 
   /**
    * 给定年份的开始日期
-   * @param {Date} date 
+   * @param {Date} date
    */
   Class.prototype.startOfYear = function(date){
     var newDate = new Date(date);
@@ -1126,7 +1139,7 @@
 
   /**
    * 给定月份的开始日期
-   * @param {Date} date 
+   * @param {Date} date
    */
   Class.prototype.startOfMonth = function(date){
     var newDate =  new Date(date);
@@ -1137,7 +1150,7 @@
 
   /**
    * 给定月份的结束日期
-   * @param {Date} date 
+   * @param {Date} date
    */
   Class.prototype.endOfMonth = function(date){
     var newDate = new Date(date);
@@ -1174,7 +1187,7 @@
     var endDay = type === 'year' ? that.endOfYear(date) : that.endOfMonth(date);
     var numOfDays = Math.floor((endDay.getTime() - startDay.getTime()) / millisecondsInDay) + 1;
     var disabledCount = 0;
-      
+
     for(var i = 0; i < numOfDays; i++){
       var day = that.addDays(startDay, i);
       if(options.disabledDate.call(options, day, position)){
@@ -1207,7 +1220,7 @@
     var that = this;
     var options = that.config;
     var position = options.range ? (opts.rangeType === 0 ? 'start' : 'end') : 'start';
-    
+
     if(!options.disabledDate) return false;
     if(options.type === 'time') return false;
     if(!(opts.disabledType === 'date' || opts.disabledType === 'datetime')) return false;
@@ -1215,7 +1228,7 @@
     // 不需要时分秒
     var normalizedDate = new Date(date);
     normalizedDate.setHours(0, 0, 0, 0);
-     
+
     return opts.type === 'year' || opts.type === 'month'
       ? that.isDisabledYearOrMonth(normalizedDate, opts.type, position)
       : options.disabledDate.call(options, normalizedDate, position);
@@ -1233,7 +1246,7 @@
     var that = this;
     var options = that.config;
     var position = options.range ? (opts.rangeType === 0 ? 'start' : 'end') : 'start';
- 
+
     if(!options.disabledTime) return false;
     if(!(options.type === "time" || options.type === "datetime")) return false;
     if(!(opts.disabledType === 'time' || opts.disabledType === 'datetime')) return false;
@@ -1241,7 +1254,7 @@
     var isDisabledItem = function(compareVal, rangeFn, rangeFnParam){
       return function(){
         return (typeof rangeFn === 'function' && rangeFn.apply(options, rangeFnParam) || []).indexOf(compareVal) !== -1;
-      } 
+      }
     }
 
     var dateObj = that.systemDate(new Date(date));
@@ -1261,8 +1274,8 @@
   /**
    * 不可选取的日期时间
    * @param {number} timestamp 当前检测的日期的时间戳
-   * @param {limitOptions} opts 
-   * @returns 
+   * @param {limitOptions} opts
+   * @returns
    */
   Class.prototype.isDisabledDateTime = function(timestamp, opts){
     opts = opts || {};
@@ -1276,8 +1289,8 @@
 
   /**
    * 无效日期范围的标记
-   * @param {limitOptions} opts 
-   * 
+   * @param {limitOptions} opts
+   *
    */
   Class.prototype.limit = function(opts){
     opts = opts || {};
@@ -1641,7 +1654,10 @@
       lay.each([24, 60, 60], function(i, item){
         var li = lay.elem('li'), childUL = ['<p>'+ lang.time[i] +'</p><ol>'];
         lay.each(new Array(item), function(ii){
-          childUL.push('<li'+ (that[startEnd][hms[i]] === ii ? ' class="'+ THIS +'"' : '') +'>'+ lay.digit(ii, 2) +'</li>');
+          if (i != 1 || (ii % options.minutesStep == 0)) {
+            childUL.push('<li'+ (that[startEnd][hms[i]] === ii ? ' class="'+ THIS +'"' : '') +'>'+ lay.digit(ii, 2) +'</li>');
+          }
+          // childUL.push('<li'+ (that[startEnd][hms[i]] === ii ? ' class="'+ THIS +'"' : '') +'>'+ lay.digit(ii, 2) +'</li>');
         });
         li.innerHTML = childUL.join('') + '</ol>';
         ul.appendChild(li);
@@ -2197,7 +2213,7 @@
               ? that.startTime && that.endTime && that.newDate(that.startTime) > that.newDate(that.endTime)
               : that.startDate && that.endDate && that.newDate(lay.extend({},that.startDate, that.startTime || {})) > that.newDate(lay.extend({},that.endDate, that.endTime || {}));
 
-            return isTimeout 
+            return isTimeout
               ? that.hint(options.type === 'time' ? lang.timeout.replace(/日期/g, '时间') : lang.timeout)
               : that.hint(lang.invalidDate);
           }
