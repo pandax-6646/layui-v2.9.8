@@ -110,7 +110,8 @@ layui.define(['form','util'], function(exports){
     text: {
       defaultNodeName: '未命名', // 节点默认名称
       none: '无数据'  // 数据为空时的文本提示
-    }
+    },
+    customOperate: false,  // 自定义节点操作按钮
   };
 
   // 重载实例
@@ -234,6 +235,7 @@ layui.define(['form','util'], function(exports){
           add: '<i class="layui-icon layui-icon-add-1"  data-type="add"></i>'
           ,update: '<i class="layui-icon layui-icon-edit" data-type="update"></i>'
           ,del: '<i class="layui-icon layui-icon-delete" data-type="del"></i>'
+          ,drag: '<i class="layui-icon layui-icon-screen-full" style="display: inline-block; transform: rotate(45deg); margin-left:5px; font-size: 16px;" data-type="drag"></i>'
         }, arr = ['<div class="layui-btn-group layui-tree-btnGroup">'];
 
         if(options.edit === true){
@@ -459,6 +461,11 @@ layui.define(['form','util'], function(exports){
         type: type,
         elem:elem
       };
+      if (options.customOperate) {
+        // 节点修改的回调
+        options.operate && options.operate(returnObj);
+        return;
+      }
       // 增加
       if(type == 'add'){
         // 若节点本身无子节点
@@ -575,7 +582,7 @@ layui.define(['form','util'], function(exports){
         });
 
       // 删除
-      } else {
+      } else if(type == 'del') {
         layer.confirm('确认删除该节点 "<span style="color: #999;">'+ (item[customName.title] || '') +'</span>" 吗？', function(index){
           options.operate && options.operate(returnObj); // 节点删除的回调
           returnObj.status = 'remove'; // 标注节点删除
